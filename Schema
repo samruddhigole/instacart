@@ -1,0 +1,73 @@
+CREATE SCHEMA IF NOT EXISTS ecommerce;
+
+USE ecommerce;
+
+-- Products table
+CREATE TABLE Products (
+  title VARCHAR(255) NOT NULL,
+  price DECIMAL(10,2) NOT NULL,
+  warranty INT,
+  catalog_id INT NOT NULL REFERENCES Catalog(id),
+  description TEXT,
+  image VARCHAR(255),
+  SKU VARCHAR(255) PRIMARY KEY,
+  stock INTEGER NOT NULL DEFAULT 0,
+  weight DECIMAL(10,2),
+  dimensions VARCHAR(255),
+  CONSTRAINT positive_price CHECK (price > 0)
+);
+
+-- Catalog table
+CREATE TABLE Catalog (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT
+);
+
+-- Orders table
+CREATE TABLE Orders (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES User(id),
+  total_price DECIMAL(10,2) NOT NULL,
+  discount_price DECIMAL(10,2),
+  payment_mode VARCHAR(255) NOT NULL,
+  ordered_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  coupon_code VARCHAR(255),
+  shipping_address TEXT,
+  order_status VARCHAR(255) DEFAULT 'placed'  -- Add a default order status
+);
+
+-- ProductsOrders table (linking table)
+CREATE TABLE ProductsOrders (
+  id SERIAL PRIMARY KEY,
+  quantity INT NOT NULL,
+  order_id INT NOT NULL REFERENCES Orders(id),
+  product_id VARCHAR(255) NOT NULL REFERENCES Products(SKU),
+  CONSTRAINT unique_product_order UNIQUE (order_id, product_id)
+);
+
+-- User table
+CREATE TABLE User (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  contact VARCHAR(20) NOT NULL,
+  address TEXT,
+  -- Password hashing should be implemented here (replace with hashed password)
+  password VARCHAR(255) NOT NULL,
+  user_type_id INT NOT NULL REFERENCES UserType(id),
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- UserType table
+CREATE TABLE UserType (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(255) NOT NULL CHECK (type IN ('Customer', 'Admin'))
+);
+
+-- Insert data into UserType (seed data for user roles)
+INSERT INTO UserType (type)
+VALUES ('Customer'), ('Admin');
+
